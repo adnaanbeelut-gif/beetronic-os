@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/client';
 
 interface Token {
   id: string;
@@ -19,45 +20,48 @@ export default function TokensPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Mock data
-    setTokens([
-      {
-        id: '1',
-        name: 'Mobile App API',
-        lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Backend Service',
-        lastUsed: null,
-        expiresAt: null,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ]);
-    setLoading(false);
+    fetchTokens();
   }, []);
 
-  const handleCreateToken = (e: React.FormEvent) => {
-    e.preventDefault();
-    const generatedToken = `beetronic_${Math.random().toString(36).substr(2, 32)}`;
-    setNewToken(generatedToken);
-    const newTokenObj = {
-      id: Date.now().toString(),
-      name: tokenName,
-      lastUsed: null,
-      expiresAt: expiration ? new Date(Date.now() + (parseInt(expiration) * 24 * 60 * 60 * 1000)).toISOString() : null,
-      createdAt: new Date().toISOString(),
-    };
-    setTokens([newTokenObj, ...tokens]);
-    alert('✅ Token created! Copy it now - it won\'t be shown again.');
+  const fetchTokens = async () => {
+    try {
+      const response = await apiClient.getApiTokens();
+      if (response.success) {
+        setTokens(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tokens:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteToken = (id: string) => {
-    if (confirm('Delete this token?')) {
-      setTokens(tokens.filter(t => t.id !== id));
+  const handleCreateToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await apiClient.createApiToken(tokenName, expiration === '0' ? '' : expiration);
+      if (response.success) {
+        setNewToken(response.data.token);
+        setTokenName('');
+        setExpiration('7d');
+        alert('✅ Token created! Copy it now - it won\'t be shown again.');
+        fetchTokens();
+      }
+    } catch (err) {
+      console.error('Failed to create token:', err);
+      alert('❌ Failed to create token');
+    }
+  };
+
+  const handleDeleteToken = async (id: string) => {
+    if (!confirm('Delete this token?')) return;
+    try {
+      await apiClient.revokeApiToken(id);
       alert('✅ Token deleted');
+      fetchTokens();
+    } catch (err) {
+      console.error('Failed to delete token:', err);
+      alert('❌ Failed to delete token');
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/client';
 
 interface Session {
   id: string;
@@ -15,36 +16,43 @@ export default function SessionsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Mock data for demo
-    setSessions([
-      {
-        id: '1',
-        deviceInfo: 'Chrome on Windows',
-        ipAddress: '192.168.1.100',
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        deviceInfo: 'Safari on MacOS',
-        ipAddress: '192.168.1.101',
-        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      },
-    ]);
-    setLoading(false);
+    fetchSessions();
   }, []);
 
-  const handleRevokeSession = (id: string) => {
-    if (confirm('Revoke this session?')) {
-      alert('✅ Session revoked');
-      setSessionsSessions(sessions.filter(s => s.id !== id));
+  const fetchSessions = async () => {
+    try {
+      const response = await apiClient.getSessions();
+      if (response.success) {
+        setSessions(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch sessions:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRevokeAll = () => {
-    if (confirm('Logout from all other devices?')) {
+  const handleRevokeSession = async (id: string) => {
+    if (!confirm('Revoke this session?')) return;
+    try {
+      await apiClient.revokeSession(id);
+      alert('✅ Session revoked');
+      fetchSessions();
+    } catch (err) {
+      console.error('Failed to revoke session:', err);
+      alert('❌ Failed to revoke session');
+    }
+  };
+
+  const handleRevokeAll = async () => {
+    if (!confirm('Logout from all other devices?')) return;
+    try {
+      await apiClient.revokeAllOtherSessions();
       alert('✅ All other sessions revoked');
+      fetchSessions();
+    } catch (err) {
+      console.error('Failed to revoke all sessions:', err);
+      alert('❌ Failed to revoke sessions');
     }
   };
 

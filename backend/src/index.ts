@@ -54,7 +54,7 @@ app.use('/api/tokens', apiTokensRoutes);
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     const result = await query(
-      `SELECT id, email, first_name, last_name, is_active, created_at
+      `SELECT id, email, first_name as "firstName", last_name as "lastName", role_id as "roleId", is_active as "isActive", two_factor_enabled as "twoFactorEnabled", last_login as "lastLogin", created_at as "createdAt"
        FROM users
        LIMIT 50`
     );

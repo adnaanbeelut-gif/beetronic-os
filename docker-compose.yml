@@ -3,21 +3,54 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: beetronic-postgres
+    container_name: beetronic-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: beetronic_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
       POSTGRES_DB: beetronic_os
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/src/config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U beetronic_user"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build: .
+    container_name: beetronic-app
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://beetronic_user:${DB_PASSWORD:-secure_password}@postgres:5432/beetronic_os
+      JWT_SECRET: ${JWT_SECRET:-generate_your_own_secret}
+      JWT_EXPIRY: 24h
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-generate_your_own_secret}
+      REFRESH_TOKEN_EXPIRY: 7d
+      TOTP_WINDOW: 2
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: beetronic-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+    restart: unless-stopped
 
 volumes:
   postgres_data:

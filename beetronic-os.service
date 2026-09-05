@@ -1,0 +1,22 @@
+[Unit]
+Description=BEETRONIC OS Backend
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=beetronic
+WorkingDirectory=/opt/beetronic-os/backend
+EnvironmentFile=/opt/beetronic-os/.env.production
+ExecStart=/usr/bin/node /opt/beetronic-os/backend/dist/index.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=beetronic-os
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

@@ -75,6 +75,61 @@ class ApiClient {
     const { data } = await this.instance.get('/users');
     return data;
   }
+
+  async createUser(email: string, password: string, firstName: string, lastName: string) {
+    const { data } = await this.instance.post('/admin/users', {
+      email,
+      password,
+      firstName,
+      lastName,
+    });
+    return data;
+  }
+
+  async deleteUser(userId: string) {
+    const { data } = await this.instance.delete(`/admin/users/${userId}`);
+    return data;
+  }
+
+  async getUserDetails(userId: string) {
+    const { data } = await this.instance.get(`/admin/users/${userId}`);
+    return data;
+  }
+
+  async updateUser(userId: string, updates: any) {
+    const { data } = await this.instance.put(`/admin/users/${userId}`, updates);
+    return data;
+  }
+
+  async getSessions() {
+    const { data } = await this.instance.get('/sessions/my-sessions');
+    return data;
+  }
+
+  async revokeSession(sessionId: string) {
+    const { data } = await this.instance.delete(`/sessions/${sessionId}`);
+    return data;
+  }
+
+  async revokeAllOtherSessions() {
+    const { data } = await this.instance.post('/sessions/revoke-all-other-sessions');
+    return data;
+  }
+
+  async getApiTokens() {
+    const { data } = await this.instance.get('/tokens/api-tokens');
+    return data;
+  }
+
+  async createApiToken(name: string, expiresIn: string) {
+    const { data } = await this.instance.post('/tokens/api-tokens', { name, expiresIn });
+    return data;
+  }
+
+  async revokeApiToken(tokenId: string) {
+    const { data } = await this.instance.delete(`/tokens/api-tokens/${tokenId}`);
+    return data;
+  }
 }
 
 export const apiClient = new ApiClient();

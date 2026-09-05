@@ -23,6 +23,17 @@ interface User_New {
   isActive: boolean;
 }
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString();
+  } catch {
+    return 'N/A';
+  }
+};
+
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +67,13 @@ export default function AdminPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // This would call the admin create user endpoint
-      console.log('Creating user:', formData);
+      await apiClient.createUser(formData.email, formData.password, formData.firstName, formData.lastName);
       alert('✅ User created successfully!');
       setFormData({ email: '', password: '', firstName: '', lastName: '' });
       setShowCreateForm(false);
       fetchUsers();
     } catch (err) {
+      console.error('Failed to create user:', err);
       alert('❌ Failed to create user');
     }
   };
@@ -70,10 +81,11 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
-      console.log('Deleting user:', userId);
+      await apiClient.deleteUser(userId);
       alert('✅ User deleted successfully!');
       fetchUsers();
     } catch (err) {
+      console.error('Failed to delete user:', err);
       alert('❌ Failed to delete user');
     }
   };
@@ -297,7 +309,7 @@ export default function AdminPage() {
             <strong>Last Login:</strong> {selectedUser.lastLogin || 'Never'}
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <strong>Created:</strong> {new Date(selectedUser.createdAt).toLocaleDateString()}
+            <strong>Created:</strong> {formatDate(selectedUser.createdAt)}
           </div>
           <button
             onClick={() => setSelectedUser(null)}
