@@ -4,6 +4,9 @@ import { apiClient } from './api/client';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminPage from './pages/AdminPage';
+import SessionsPage from './pages/SessionsPage';
+import TokensPage from './pages/TokensPage';
 
 interface User {
   id: string;
@@ -72,6 +75,36 @@ export default function App() {
           element={
             user ? (
               <ProfilePage user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            user ? (
+              <AdminPage />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/admin/sessions"
+          element={
+            user ? (
+              <SessionsPage />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/admin/tokens"
+          element={
+            user ? (
+              <TokensPage />
             ) : (
               <Navigate to="/login" />
             )

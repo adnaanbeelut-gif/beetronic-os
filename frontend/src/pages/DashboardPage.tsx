@@ -47,12 +47,52 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
     <div style={{ fontFamily: 'system-ui', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1>🔐 BEETRONIC OS Dashboard</h1>
-        <div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => navigate('/admin/users')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#ff6b6b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+            title="Manage users (admin only)"
+          >
+            👥 Users
+          </button>
+          <button
+            onClick={() => navigate('/admin/sessions')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#4ecdc4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            🔐 Sessions
+          </button>
+          <button
+            onClick={() => navigate('/admin/tokens')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#95e1d3',
+              color: '#333',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            🔑 Tokens
+          </button>
           <button
             onClick={() => navigate('/profile')}
             style={{
               padding: '8px 16px',
-              marginRight: '10px',
+              marginLeft: '10px',
               backgroundColor: '#17a2b8',
               color: 'white',
               border: 'none',
