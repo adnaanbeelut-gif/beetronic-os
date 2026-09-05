@@ -1,0 +1,11 @@
+{
+  "name": "beetronic-os",
+  "version": "1.0.0",
+  "description": "Secure authentication and user management system",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ]
+}
