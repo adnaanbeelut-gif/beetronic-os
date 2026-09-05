@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth';
+import passwordRoutes from './routes/password';
+import adminRoutes from './routes/admin';
+import sessionsRoutes from './routes/sessions';
+import apiTokensRoutes from './routes/api-tokens';
 import { authMiddleware } from './middleware/auth';
 import { auditMiddleware } from './middleware/audit';
 import { query } from './config/database';
@@ -41,6 +45,10 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/password', passwordRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/sessions', sessionsRoutes);
+app.use('/api/tokens', apiTokensRoutes);
 
 // Protected route example
 app.get('/api/users', authMiddleware, async (req, res) => {

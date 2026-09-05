@@ -1,7 +1,9 @@
+/// <reference path="../types/speakeasy.d.ts" />
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
@@ -20,16 +22,16 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export function generateToken(userId: string, email: string): string {
   return jwt.sign(
     { userId, email },
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRY }
+    JWT_SECRET as string,
+    { expiresIn: JWT_EXPIRY } as any
   );
 }
 
 export function generateRefreshToken(userId: string): string {
   return jwt.sign(
     { userId },
-    REFRESH_SECRET,
-    { expiresIn: REFRESH_EXPIRY }
+    REFRESH_SECRET as string,
+    { expiresIn: REFRESH_EXPIRY } as any
   );
 }
 
@@ -74,5 +76,5 @@ export function verifyTwoFactorToken(secret: string, token: string): boolean {
 }
 
 export function generateRandomToken(length: number = 32): string {
-  return require('crypto').randomBytes(length).toString('hex');
+  return crypto.randomBytes(length).toString('hex');
 }

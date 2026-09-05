@@ -15,11 +15,15 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
         bodyKeys: req.body ? Object.keys(req.body) : [],
       };
 
-      query(
-        `INSERT INTO audit_logs (user_id, action, resource, details, ip_address)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [req.userId, action, req.path, JSON.stringify(details), req.ip]
-      ).catch((err) => console.error('Audit log error:', err));
+      try {
+        query(
+          `INSERT INTO audit_logs (user_id, action, resource, details, ip_address)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [req.userId, action, req.path, JSON.stringify(details), req.ip]
+        );
+      } catch (err) {
+        console.error('Audit log error:', err);
+      }
     }
 
     res.send = originalSend;

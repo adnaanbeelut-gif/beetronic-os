@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { query } from '../config/database';
 import { authMiddleware } from '../middleware/auth';
 import {
@@ -12,6 +13,19 @@ import {
   generateRandomToken,
 } from '../utils/auth';
 import type { AuthRequest, AuthResponse, ApiResponse } from '@beetronic/shared';
+
+interface UserRow {
+  id: string;
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  role_id: string;
+  is_active: number;
+  two_factor_enabled: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const router = Router();
 
@@ -48,16 +62,17 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     }
 
-    const roleId = roleResult.rows[0].id;
+    const roleId = (roleResult.rows[0] as { id: string }).id;
+    const userId = uuidv4();
 
     const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, role_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email, first_name, last_name, role_id, is_active, created_at, updated_at`,
-      [email, passwordHash, firstName, lastName, roleId]
+      [userId, email, passwordHash, firstName, lastName, roleId]
     );
 
-    const user = result.rows[0];
+    const user = result.rows[0] as UserRow;
     const token = generateToken(user.id, user.email);
 
     res.status(201).json({
@@ -104,7 +119,7 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    const user = result.rows[0];
+    const user = result.rows[0] as UserRow;
 
     if (!user.is_active) {
       return res.status(403).json({
@@ -125,16 +140,19 @@ router.post('/login', async (req: Request, res: Response) => {
 
     const token = generateToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
+    const sessionId = uuidv4();
 
     // Store session
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await query(
-      `INSERT INTO sessions (user_id, token, expires_at, ip_address)
-       VALUES ($1, $2, NOW() + INTERVAL '24 hours', $3)`,
-      [user.id, token, req.ip]
+      `INSERT INTO sessions (id, user_id, token, expires_at, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [sessionId, user.id, token, expiresAt, req.ip]
     );
 
     // Update last login
-    await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+    const now = new Date().toISOString();
+    await query('UPDATE users SET last_login = $1 WHERE id = $2', [now, user.id]);
 
     const response: ApiResponse<AuthResponse> = {
       success: true,
@@ -145,9 +163,9 @@ router.post('/login', async (req: Request, res: Response) => {
           firstName: user.first_name,
           lastName: user.last_name,
           roleId: user.role_id,
-          isActive: user.is_active,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at,
+          isActive: Boolean(user.is_active),
+          createdAt: new Date(user.created_at),
+          updatedAt: new Date(user.updated_at),
         },
         token,
         refreshToken,
@@ -222,7 +240,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       });
     }
 
-    const user = userResult.rows[0];
+    const user = userResult.rows[0] as { id: string; email: string };
     const newToken = generateToken(user.id, user.email);
 
     res.json({
@@ -284,7 +302,7 @@ router.post('/verify-2fa', authMiddleware, async (req: Request, res: Response) =
     }
 
     await query(
-      `UPDATE users SET two_factor_enabled = true, two_factor_secret = $1 WHERE id = $2`,
+      `UPDATE users SET two_factor_enabled = 1, two_factor_secret = $1 WHERE id = $2`,
       [secret, req.userId]
     );
 
@@ -319,7 +337,7 @@ router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
       });
     }
 
-    const user = result.rows[0];
+    const user = result.rows[0] as UserRow;
 
     res.json({
       success: true,
@@ -329,9 +347,9 @@ router.get('/profile', authMiddleware, async (req: Request, res: Response) => {
         firstName: user.first_name,
         lastName: user.last_name,
         roleId: user.role_id,
-        isActive: user.is_active,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
+        isActive: Boolean(user.is_active),
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at),
       },
       statusCode: 200,
     });

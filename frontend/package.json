@@ -15,7 +15,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
     "axios": "^1.6.2",
-    "@beetronic/shared": "workspace:*"
+    "@beetronic/shared": "file:../shared"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
